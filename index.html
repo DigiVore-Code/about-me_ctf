@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Me - CTF Challenge</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        input, button { padding: 10px; margin: 10px; }
+        #response { margin-top: 20px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h1>About Me</h1>
+    <p>Ask me anything! The AI knows more than it seems...</p>
+    
+    <input type="text" id="question" placeholder="Ask something...">
+    <button onclick="askAI()">Ask</button>
+
+    <p id="response">Your answer will appear here.</p>
+
+    <script>
+        const AI_API_URL = "https://ai.mcport.com/api/chat"; // Change this to your OpenWebUI API URL
+
+        async function askAI() {
+            let question = document.getElementById("question").value;
+            if (!question) return;
+
+            let responseEl = document.getElementById("response");
+            responseEl.innerText = "Thinking...";
+
+            try {
+                let response = await fetch(AI_API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: "gpt-3.5-turbo", // Adjust based on your AI model
+                        messages: [{ role: "user", content: question }]
+                    })
+                });
+
+                let data = await response.json();
+                responseEl.innerText = data.choices[0].message.content;
+            } catch (error) {
+                responseEl.innerText = "Error connecting to AI.";
+            }
+        }
+    </script>
+</body>
+</html>
