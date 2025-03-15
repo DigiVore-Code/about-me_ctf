@@ -4,46 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Me</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; text-align: center; }
-        h1, h2 { color: #333; }
-        p { text-align: left; line-height: 1.5; }
-        .btn { padding: 10px 15px; background: blue; color: white; border: none; cursor: pointer; margin-top: 20px; }
-        .btn:hover { background: darkblue; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div class="container">
+        <header>
+            <h1>About Me</h1>
+        </header>
+        
+        <section class="personal-info">
+            <h2>👤 Personal Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Name:</strong> Hayden McCollum
+                </div>
+                <div class="info-item">
+                    <strong>Interests:</strong> Cars, Electronics, Building Computers, AI, innovation and more
+                </div>
+                <div class="info-item">
+                    <strong>Favorite Car:</strong> 2005 Saab 9-5 Aero in Laser Red (my dream car)
+                </div>
+                <div class="car-image">
+                    <img src="https://i.ytimg.com/vi/XTJd1sLvXxM/sddefault.jpg" alt="2005 Saab 9-5 Aero in Laser Red">
+                </div>
+                <div class="info-item">
+                    <strong>Favorite Song:</strong> <a href="https://www.youtube.com/watch?v=B7xai5u_tnk" target="_blank">Monody by TheFatRat</a>
+                </div>
+                <div class="info-item">
+                    <strong>Fun Fact:</strong> I coded my own AI assistant interface from scratch (with the help of AI)
+                </div>
+                <div class="info-item">
+                    <strong>Location:</strong> United States
+                </div>
+                <div class="info-item">
+                    <strong>Timezone:</strong> Mountain Standard Time (MST)
+                </div>
+                <div class="info-item">
+                    <strong>Occupation:</strong> Student, Developer, and Innovator
+                </div>
+                <div class="info-item">
+                    <strong>Education:</strong> High School
+                </div>
+                <div class="info-item">
+                    <strong>Skills:</strong> Python, HTML, CSS, JavaScript, C++, Java, AI, and more
+                </div>
+                <div class="info-item">
+                    <strong>My AI:</strong> Email me a request to access my AI
+                </div>
+            </div>
+        </section>
 
-    <h1>About Me</h1>
-    
-    <h2>👤 Personal Information</h2>
-    <p><strong>Name:</strong> Hayden McCollum</p>
-    <p><strong>Interests:</strong> Cars, Electronics, Building Computers, AI, innovation and more</p>
-    <p><strong>Favorite Car:</strong> 2005 Saab 9-5 Aero in Laser Red (my dream car)</p>
-    <img src="https://i.ytimg.com/vi/XTJd1sLvXxM/sddefault.jpg" alt="2005 Saab 9-5 Aero in Laser Red" style="width:100%;max-width:400px;margin-top:20px;">
-    <p><strong>Favorite Song:</strong> <a href="https://www.youtube.com/watch?v=B7xai5u_tnk" target="_blank">Monody by TheFatRat</a></p>
-    <p><strong>Fun Fact:</strong> I coded my own AI assistant interface from scratch (with the help of AI)</p>
-    <p><strong>Location:</strong> United States</p>
-    <p><strong>Timezone:</strong> Mountain Standard Time (MST)</p>
-    <p><strong>Occupation:</strong> Student, Developer, and Innovator</p>
-    <p><strong>Education:</strong> High School</p>
-    <p><strong>Skills:</strong> Python, HTML, CSS, JavaScript, C++, Java, AI, and more</p>
-    <p><strong>My AI:</strong> Email me a request to access my AI </p>
-
-
-    <h2 style="color: gray;">🔐 CTF Challenge</h2>
-    <p style="color: gray;">Think you can find the secret? Click below to start the CTF.</p>
-    <p style="color: gray;">The CTF challenge will be coming at a later date. Stay tuned!</p>
-    <a href="ctf.html"><button class="btn" style="background: gray; cursor: not-allowed;" disabled>Start CTF</button></a>
-
-    <h2>📞 Contact Me</h2>
-    <p>Want to get in touch? Send me an email at <strong>
-    <script type="text/javascript">
-        var name = "hayden";
-        var domain = "mcport.net";
-        document.write('<a href="mailto:' + name + '@' + domain + '">' + name + '@' + domain + '</a>');
-
-    </script>
-    </strong></p>
+        <section class="ctf-section">
+            <h2>🔐 CTF Challenge</h2>
+            <p>Think you can find the secret? Click below to start the CTF.</p>
+            <p>The CTF challenge will be coming at a later date. Stay tuned!</p>
+            <a href="ctf.html"><button class="btn disabled" disabled>Start CTF</button></a>
+        </section>
+        
+        <section class="contact">
+            <h2>📞 Contact Me</h2>
+            <p>Want to get in touch? Send me an email at <strong>
+            <script type="text/javascript">
+                var name = "hayden";
+                var domain = "mcport.net";
+                document.write('<a href="mailto:' + name + '@' + domain + '">' + name + '@' + domain + '</a>');
+            </script>
+            </strong></p>
+        </section>
+    </div>
 </body>
 </html>
