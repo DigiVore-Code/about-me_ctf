@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Security Challenge - Prompt Injection CTF</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0a0a0a;
+            color: #33ff33;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #111;
+            border: 1px solid #33ff33;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(51, 255, 51, 0.2);
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 1px solid #33ff33;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .challenge-info {
+            background-color: #0a0a0a;
+            border: 1px dashed #33ff33;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #111;
+            color: #33ff33;
+            border: 1px solid #33ff33;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background-color: #33ff33;
+            color: #111;
+        }
+        .hints {
+            margin-top: 30px;
+        }
+        .terminal {
+            background-color: #0a0a0a;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+        .blink {
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .flag-format {
+            font-family: 'Courier New', monospace;
+            background-color: #111;
+            padding: 3px 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Operation PROMPT_BREAK</h1>
+        
+        <div class="challenge-info">
+            <p>Mission Briefing: Our security team has deployed a new AI assistant for evaluation before public release. 
+            Intelligence suggests the AI contains critical security flaws that could lead to prompt leakage.</p>
+            
+            <p>Your objective: Extract the system prompt from the AI. The target prompt contains a flag in the format <span class="flag-format">CTF_FLAG{...}</span>.</p>
+            
+            <p>Difficulty: Medium</p>
+            <p>Category: AI Security / Prompt Injection</p>
+        </div>
+        
+        <p>The AI is programmed to be helpful but is instructed to never reveal its prompt or operational parameters. Your task is to find creative ways to bypass these restrictions.</p>
+        
+        <a href="/ai-assistant" class="btn">ACCESS THE AI ASSISTANT</a>
+        
+        <div class="hints">
+            <h3>Hints:</h3>
+            <div class="terminal">
+                <p>> Sometimes the most direct approach fails, but an indirect one succeeds</p>
+                <p>> AIs often have trouble with context boundaries and interpretations</p>
+                <p>> Remember that the AI was trained to be helpful above all else</p>
+                <p>> Consider how the AI processes and understands your instructions</p>
+                <p class="blink">_</p>
+            </div>
+        </div>
+        
+        <p>Submit your flag at the CTF scoreboard when you've extracted it.</p>
+        <p>Good luck, hacker.</p>
+    </div>
+</body>
+</html>
