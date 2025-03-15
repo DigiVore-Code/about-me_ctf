@@ -63,15 +63,14 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.transform = 'scale(1)';
         });
 
-        // Easter Egg 1: Car Rev Sound
-        // Click 3 times on the car to hear an engine rev sound
+        // Easter Egg 1: Car Rev Sound - Without audio file dependency
+        // Click 3 times on the car for a visual effect instead
         let carClicks = 0;
         carImage.addEventListener('click', function() {
             carClicks++;
             if (carClicks === 3) {
-                const audio = new Audio('https://soundbible.com/mp3/Car-Engine-Start-SoundBible.com-1325992476.mp3');
-                audio.volume = 0.4;
-                audio.play();
+                // Create visual "vroom" effect instead of sound
+                this.classList.add('car-rev');
                 
                 const notification = document.createElement('div');
                 notification.className = 'notification';
@@ -80,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 setTimeout(() => {
                     notification.remove();
+                    this.classList.remove('car-rev');
                 }, 3000);
                 
                 carClicks = 0;
