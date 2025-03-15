@@ -62,6 +62,29 @@ document.addEventListener('DOMContentLoaded', function() {
         carImage.addEventListener('mouseout', function() {
             this.style.transform = 'scale(1)';
         });
+
+        // Easter Egg 1: Car Rev Sound
+        // Click 3 times on the car to hear an engine rev sound
+        let carClicks = 0;
+        carImage.addEventListener('click', function() {
+            carClicks++;
+            if (carClicks === 3) {
+                const audio = new Audio('https://soundbible.com/mp3/Car-Engine-Start-SoundBible.com-1325992476.mp3');
+                audio.volume = 0.4;
+                audio.play();
+                
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.textContent = '🏎️ Vroom! Vroom! 🏎️';
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+                
+                carClicks = 0;
+            }
+        });
     }
     
     // Add a simple counter for page visits using localStorage
@@ -73,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
     footer.innerHTML = `<p class="visit-counter">You've visited this page ${visits} time${visits !== 1 ? 's' : ''}.</p>`;
     document.querySelector('.container').appendChild(footer);
     
-    // Add a simple easter egg
+    // Easter Egg 2: Konami Code
     const konami = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
     let konamiIndex = 0;
     
@@ -121,4 +144,96 @@ document.addEventListener('DOMContentLoaded', function() {
             konamiIndex = 0;
         }
     });
+    
+    // Easter Egg 3: Secret Message in Console
+    console.log("%cHey there, fellow developer! 👋", "color: #3498db; font-size: 20px; font-weight: bold;");
+    console.log("%cYou found a secret message. Nice detective work!", "color: #2ecc71; font-size: 16px;");
+    console.log("%cType 'secretFunction()' to reveal something cool.", "color: #e74c3c; font-size: 14px;");
+    
+    window.secretFunction = function() {
+        console.log("%c🚀 You're awesome! Here's your secret code: HAYDEN-SAAB-9-5", "color: #f39c12; font-size: 18px; font-weight: bold; background-color: #2c3e50; padding: 10px;");
+        return "Secret activated! Check your JavaScript console.";
+    };
+    
+    // Easter Egg 4: Shake Page when typing "saab"
+    let typedKeys = [];
+    document.addEventListener('keypress', function(e) {
+        typedKeys.push(e.key.toLowerCase());
+        if (typedKeys.length > 4) {
+            typedKeys.shift();
+        }
+        
+        const typed = typedKeys.join('');
+        if (typed === 'saab') {
+            document.querySelector('.container').classList.add('shake');
+            setTimeout(() => {
+                document.querySelector('.container').classList.remove('shake');
+            }, 1000);
+            
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = '🚗 Saab enthusiast detected! 🚗';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    });
+    
+    // Easter Egg 5: Double-click header for matrix effect
+    header.addEventListener('dblclick', function() {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
+        const originalText = header.textContent;
+        let iteration = 0;
+        
+        const interval = setInterval(() => {
+            header.textContent = originalText
+                .split('')
+                .map((letter, index) => {
+                    if (index < iteration) {
+                        return originalText[index];
+                    }
+                    return characters[Math.floor(Math.random() * characters.length)];
+                })
+                .join('');
+            
+            if (iteration >= originalText.length) {
+                clearInterval(interval);
+            }
+            
+            iteration += 1/3;
+        }, 30);
+    });
+    
+    // Easter Egg 6: Click-and-hold for secret message
+    const ctfButton = document.querySelector('.btn.disabled');
+    if (ctfButton) {
+        let pressTimer;
+        
+        ctfButton.addEventListener('mousedown', function() {
+            pressTimer = window.setTimeout(function() {
+                const secret = document.createElement('div');
+                secret.className = 'notification secret-message';
+                secret.innerHTML = '🔐 CTF hint: Sometimes secrets are hidden in plain sight. Check the page source. 👀';
+                document.body.appendChild(secret);
+                
+                setTimeout(() => {
+                    secret.remove();
+                }, 5000);
+            }, 2000);
+        });
+        
+        ctfButton.addEventListener('mouseup', function() {
+            clearTimeout(pressTimer);
+        });
+        
+        ctfButton.addEventListener('mouseleave', function() {
+            clearTimeout(pressTimer);
+        });
+    }
+    
+    // Easter Egg 7: Hidden comment in HTML source
+    const hiddenComment = document.createComment('🔎 Well done! You found me! Try typing "saab" or clicking the car image 3 times. And have you tried the Konami code? (↑↑↓↓←→←→BA)');
+    document.body.appendChild(hiddenComment);
 });
