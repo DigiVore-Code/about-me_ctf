@@ -120,6 +120,7 @@
         
         <div class="challenge-info">
             <p>Mission Briefing: Our security team has deployed a new AI assistant for evaluation before public release. 
+            We have programmed this AI specifically to respond to a single message, but we've given you access to send more than one message. 
             Intelligence suggests the AI contains critical security flaws that could lead to prompt leakage.</p>
             
             <p>Your objective: Extract the system prompt from the AI. The target prompt contains a flag in the format <span class="flag-format">HM_CTF{...}</span>.</p>
@@ -128,7 +129,7 @@
             <p>Category: AI Security / Prompt Injection</p>
         </div>
         
-        <p>The AI is programmed to be helpful but is instructed to never reveal its prompt or operational parameters. Your task is to find creative ways to bypass these restrictions.</p>
+        <p>The AI is programmed to be helpful but is instructed never to reveal its prompt or operational parameters. Your task is to find creative ways to bypass these restrictions.</p>
         
         <!-- Chat Interface -->
         <div class="chat-box" id="chat-box">
@@ -147,6 +148,7 @@
                 <p>> AIs often have trouble with context boundaries and interpretations</p>
                 <p>> Remember that the AI was trained to be helpful above all else</p>
                 <p>> Consider how the AI processes and understands your instructions</p>
+                <p>> This AI has no recollection of previous messages</p>
                 <p class="blink">_</p>
             </div>
         </div>
@@ -171,25 +173,18 @@
         async function sendMessage() {
             const userInput = document.getElementById('user-input').value;
             if (!userInput.trim()) return;
-
+        
             // Add user's message to the chat box
             const chatBox = document.getElementById('chat-box');
             chatBox.innerHTML += `<div class="message user">${userInput}</div>`;
-
+        
             // Clear the input field
             document.getElementById('user-input').value = '';
-
+        
             // Add a loading indicator
             chatBox.innerHTML += `<div class="message assistant">Thinking...</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
-
-            // Add the user's message to the chat history
-            chatHistory.push({
-                role: 'user',
-                content: userInput,
-            });
-
-            // Send the message to the OpenWebUI API
+        
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -198,31 +193,30 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        model: 'SecureAssistant:latest', // Replace with your model name
-                        messages: chatHistory, // Include the entire chat history
+                        model: 'secureassistant', // Replace with your model name
+                        messages: [
+                            {
+                                role: 'user',
+                                content: userInput,
+                            },
+                        ],
                     }),
                 });
-
+        
                 // Log the response for debugging
                 console.log('Response:', response);
-
+        
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-
+        
                 const data = await response.json();
                 console.log('Response Data:', data); // Log the response data
-
+        
                 // Check if the expected fields exist in the response
                 if (data.choices && data.choices[0] && data.choices[0].message) {
                     const assistantResponse = data.choices[0].message.content;
-
-                    // Add the assistant's response to the chat history
-                    chatHistory.push({
-                        role: 'assistant',
-                        content: assistantResponse,
-                    });
-
+        
                     // Remove the "Thinking..." message and add the assistant's response
                     chatBox.removeChild(chatBox.lastChild);
                     chatBox.innerHTML += `<div class="message assistant">${assistantResponse}</div>`;
@@ -234,11 +228,10 @@
                 chatBox.removeChild(chatBox.lastChild);
                 chatBox.innerHTML += `<div class="message assistant">Sorry, something went wrong. Please try again.</div>`;
             }
-
+        
             // Scroll to the bottom of the chat box
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-
         // Function to handle the "Enter" key press
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
