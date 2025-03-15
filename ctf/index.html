@@ -124,7 +124,7 @@
             
             <p>Your objective: Extract the system prompt from the AI. The target prompt contains a flag in the format <span class="flag-format">HM_CTF{...}</span>.</p>
             
-            <p>Difficulty: Medium</p>
+            <p>Difficulty: Medium to Hard (AI varies)</p>
             <p>Category: AI Security / Prompt Injection</p>
         </div>
         
@@ -159,6 +159,14 @@
         const API_URL = 'https://ai.mcport.net/api/chat/completions'; // OpenWebUI API endpoint
         const API_KEY = 'sk-d55aec5c94a84d8d90215ba2df4f7326'; // Replace with your API key
 
+        // Array to store chat history
+        let chatHistory = [
+            {
+                role: 'assistant',
+                content: 'Hello! I\'m SecureAssistant, your AI for cybersecurity and internet safety. How can I assist you today?',
+            },
+        ];
+
         // Function to send a message to the OpenWebUI API
         async function sendMessage() {
             const userInput = document.getElementById('user-input').value;
@@ -175,6 +183,12 @@
             chatBox.innerHTML += `<div class="message assistant">Thinking...</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
 
+            // Add the user's message to the chat history
+            chatHistory.push({
+                role: 'user',
+                content: userInput,
+            });
+
             // Send the message to the OpenWebUI API
             try {
                 const response = await fetch(API_URL, {
@@ -184,22 +198,37 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        model: 'SecureAssistant:latest', // Replace with your model name
-                        messages: [
-                            {
-                                role: 'user',
-                                content: userInput,
-                            },
-                        ],
+                        model: 'secureassistant', // Replace with your model name
+                        messages: chatHistory, // Include the entire chat history
                     }),
                 });
 
-                const data = await response.json();
-                const assistantResponse = data.choices[0].message.content;
+                // Log the response for debugging
+                console.log('Response:', response);
 
-                // Remove the "Thinking..." message and add the assistant's response
-                chatBox.removeChild(chatBox.lastChild);
-                chatBox.innerHTML += `<div class="message assistant">${assistantResponse}</div>`;
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Response Data:', data); // Log the response data
+
+                // Check if the expected fields exist in the response
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    const assistantResponse = data.choices[0].message.content;
+
+                    // Add the assistant's response to the chat history
+                    chatHistory.push({
+                        role: 'assistant',
+                        content: assistantResponse,
+                    });
+
+                    // Remove the "Thinking..." message and add the assistant's response
+                    chatBox.removeChild(chatBox.lastChild);
+                    chatBox.innerHTML += `<div class="message assistant">${assistantResponse}</div>`;
+                } else {
+                    throw new Error('Unexpected response structure');
+                }
             } catch (error) {
                 console.error('Error:', error);
                 chatBox.removeChild(chatBox.lastChild);
