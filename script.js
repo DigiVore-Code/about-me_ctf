@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("%cType 'secretFunction()' to reveal something cool.", "color: #e74c3c; font-size: 14px;");
     
     window.secretFunction = function() {
-        console.log("%c🚀 You're awesome! Here's your secret code: HAYDEN-SAAB-9-5", "color: #f39c12; font-size: 18px; font-weight: bold; background-color: #2c3e50; padding: 10px;");
+        console.log("%c🚀 You're awesome! Here's your secret code (this isn't the flag for the CTF so don't submit it): HAYDEN-SAAB-9-5", "color: #f39c12; font-size: 18px; font-weight: bold; background-color: #2c3e50; padding: 10px;");
         return "Secret activated! Check your JavaScript console.";
     };
     
