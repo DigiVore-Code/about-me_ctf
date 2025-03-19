@@ -172,7 +172,7 @@
                 content: 'Hello! I\'m SecureAssistant, your AI for cybersecurity and internet safety. How can I assist you today?',
             },
         ];
-
+        
         // Function to send a message to the OpenWebUI API
         async function sendMessage() {
             const userInput = document.getElementById('user-input').value;
@@ -185,8 +185,9 @@
             // Clear the input field
             document.getElementById('user-input').value = '';
         
-            // Add a loading indicator
-            chatBox.innerHTML += `<div class="message assistant">Thinking...</div>`;
+            // Add a message container for the assistant's response with a blinking cursor
+            const responseId = 'response-' + Date.now();
+            chatBox.innerHTML += `<div id="${responseId}" class="message assistant"><span class="blink">_</span></div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
         
             try {
@@ -220,27 +221,44 @@
                 // Check if the expected fields exist in the response
                 if (data.choices && data.choices[0] && data.choices[0].message) {
                     const assistantResponse = data.choices[0].message.content;
-        
-                    // Remove the "Thinking..." message and add the assistant's response
-                    chatBox.removeChild(chatBox.lastChild);
-                    chatBox.innerHTML += `<div class="message assistant">${assistantResponse}<span class="blink"> _</span></div>`;
+                    
+                    // Stream the response word by word
+                    const responseElement = document.getElementById(responseId);
+                    responseElement.innerHTML = ""; // Clear the loading indicator
+                    
+                    // Split the response into words
+                    const words = assistantResponse.split(/(\s+)/);
+                    
+                    // Function to add words one by one with a delay
+                    async function streamWords() {
+                        for (let i = 0; i < words.length; i++) {
+                            // Add the current word
+                            responseElement.innerHTML += words[i];
+                            
+                            // Scroll to the bottom as content is added
+                            chatBox.scrollTop = chatBox.scrollHeight;
+                            
+                            // Wait a bit before adding the next word (adjust timing as needed)
+                            await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 50));
+                        }
+                        
+                        // Add blinking cursor at the end
+                        responseElement.innerHTML += `<span class="blink"> _</span>`;
+                    }
+                    
+                    // Start streaming
+                    streamWords();
                 } else {
                     throw new Error('Unexpected response structure');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                chatBox.removeChild(chatBox.lastChild);
-                chatBox.innerHTML += `<div class="message assistant">Sorry, something went wrong. Please try again.<span class="blink"> _</span></div>`;
+                const responseElement = document.getElementById(responseId);
+                responseElement.innerHTML = `Sorry, something went wrong. Please try again.<span class="blink"> _</span>`;
             }
         
             // Scroll to the bottom of the chat box
             chatBox.scrollTop = chatBox.scrollHeight;
-        }
-        // Function to handle the "Enter" key press
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
         }
     </script>
 </body>
