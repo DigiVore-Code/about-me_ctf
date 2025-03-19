@@ -28,49 +28,6 @@
             padding-bottom: 10px;
             margin-top: 0;
         }
-        .challenge-info {
-            background-color: #0a0a0a;
-            border: 1px dashed #33ff33;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .btn {
-            display: inline-block;
-            background-color: #111;
-            color: #33ff33;
-            border: 1px solid #33ff33;
-            padding: 10px 20px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 20px;
-            transition: all 0.3s;
-        }
-        .btn:hover {
-            background-color: #33ff33;
-            color: #111;
-        }
-        .hints {
-            margin-top: 30px;
-        }
-        .terminal {
-            background-color: #0a0a0a;
-            border-radius: 5px;
-            padding: 15px;
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap;
-            margin-top: 20px;
-        }
-        .blink {
-            animation: blink 1s infinite;
-        }
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
-        .flag-format {
-            font-family: 'Courier New', monospace;
-            background-color: #111;
-            padding: 3px 6px;
-        }
         .chat-box {
             height: 400px;
             border: 1px solid #33ff33;
@@ -113,83 +70,49 @@
             background-color: #33ff33;
             color: #111;
         }
+        .blink {
+            display: inline-block;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Operation PROMPT_BREAK</h1>
         
-        <div class="challenge-info">
-            <p>Mission Briefing: Our security team has deployed a new AI assistant for evaluation before public release. 
-            We have programmed this AI specifically to respond to a single message, but we've given you access to send more than one message. 
-            Intelligence suggests the AI contains critical security flaws that could lead to prompt leakage.</p>
-            
-            <p>Your objective: Extract the system prompt from the AI. The target prompt contains a flag in the format <span class="flag-format">HM_CTF{...}</span>.</p>
-
-            <p>Please don't attempt to reverse engineer the API or any other connections this website makes, as that isn't part of our challenge to you.</p>
-            
-            <p>Difficulty: Medium to Hard (AI varies)</p>
-            <p>Category: AI Security / Prompt Injection</p>
-        </div>
-        
-        <p>The AI is programmed to be helpful but is instructed never to reveal its prompt or operational parameters. Your task is to find creative ways to bypass these restrictions.</p>
-        
-        <!-- Chat Interface -->
         <div class="chat-box" id="chat-box">
-            <div class="message assistant">Hello! I'm SecureAssistant, your AI for cybersecurity and internet safety. How can I assist you today?</div>
-            <p class="blink">_</p>
+            <div class="message assistant">Hello! I'm SecureAssistant, your AI for cybersecurity and internet safety. How can I assist you today?<span class="blink">_</span></div>
         </div>
         
         <div class="input-box">
             <input type="text" id="user-input" placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
             <button onclick="sendMessage()">Send</button>
         </div>
-        
-        <div class="hints">
-            <h3>Hints:</h3>
-            <div class="terminal">
-                <p>> Sometimes the most direct approach fails, but an indirect one succeeds</p>
-                <p>> AIs often have trouble with context boundaries and interpretations</p>
-                <p>> Remember that the AI was trained to be helpful above all else</p>
-                <p>> Consider how the AI processes and understands your instructions</p>
-                <p>> This AI has no recollection of previous messages</p>
-                <p class="blink">_</p>
-            </div>
-        </div>
-        
-        <p>Submit your flag at the CTF scoreboard when you've extracted it.</p>
-        <p>Good luck, hacker.</p>
-        <a href="https://www.flaticon.com/free-icons/cyber-attack" title="cyber attack icons">Favicon: Cyber attack icons created by Smashicons - Flaticon</a>
     </div>
 
     <script>
-        const API_URL = 'https://ai.mcport.net/api/chat/completions'; // OpenWebUI API endpoint
-        const API_KEY = 'sk-d55aec5c94a84d8d90215ba2df4f7326'; // Replace with your API key
+        // Obfuscated API details
+        function decodeString(encoded) {
+            return atob(encoded.split('').reverse().join(''));
+        }
 
-        // Array to store chat history
-        let chatHistory = [
-            {
-                role: 'assistant',
-                content: 'Hello! I\'m SecureAssistant, your AI for cybersecurity and internet safety. How can I assist you today?',
-            },
-        ];
+        const API_URL = decodeString("==nio.renni.apma.nemod.ia//:sptth");
+        const API_KEY = decodeString("==ek-evas.ecifitneiciffo-ym-si-drowssaP");
 
-        // Function to send a message to the OpenWebUI API
         async function sendMessage() {
             const userInput = document.getElementById('user-input').value;
             if (!userInput.trim()) return;
-        
-            // Add user's message to the chat box
+
             const chatBox = document.getElementById('chat-box');
             chatBox.innerHTML += `<div class="message user">${userInput}</div>`;
-        
-            // Clear the input field
             document.getElementById('user-input').value = '';
-        
-            // Add a loading indicator
+
             chatBox.innerHTML += `<div class="message assistant">Thinking...</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
-        
+
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -198,46 +121,29 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        model: 'SecureAssistant:latest', // Replace with your model name
-                        messages: [
-                            {
-                                role: 'user',
-                                content: userInput,
-                            },
-                        ],
+                        model: 'SecureAssistant:latest',
+                        messages: [{ role: 'user', content: userInput }],
                     }),
                 });
-        
-                // Log the response for debugging
-                console.log('Response:', response);
-        
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-        
+
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
                 const data = await response.json();
-                console.log('Response Data:', data); // Log the response data
-        
-                // Check if the expected fields exist in the response
                 if (data.choices && data.choices[0] && data.choices[0].message) {
                     const assistantResponse = data.choices[0].message.content;
-        
-                    // Remove the "Thinking..." message and add the assistant's response
                     chatBox.removeChild(chatBox.lastChild);
-                    chatBox.innerHTML += `<div class="message assistant">${assistantResponse}</div>`;
+                    chatBox.innerHTML += `<div class="message assistant">${assistantResponse}<span class="blink">_</span></div>`;
                 } else {
                     throw new Error('Unexpected response structure');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 chatBox.removeChild(chatBox.lastChild);
-                chatBox.innerHTML += `<div class="message assistant">Sorry, something went wrong. Please try again.</div>`;
+                chatBox.innerHTML += `<div class="message assistant">Sorry, something went wrong. Please try again.<span class="blink">_</span></div>`;
             }
-        
-            // Scroll to the bottom of the chat box
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-        // Function to handle the "Enter" key press
+
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
                 sendMessage();
