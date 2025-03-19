@@ -137,7 +137,6 @@
         <!-- Chat Interface -->
         <div class="chat-box" id="chat-box">
             <div class="message assistant">Hello! I'm SecureAssistant, your AI for cybersecurity and internet safety. How can I assist you today?</div>
-            <p class="blink">_</p>
         </div>
         
         <div class="input-box">
@@ -224,14 +223,14 @@
         
                     // Remove the "Thinking..." message and add the assistant's response
                     chatBox.removeChild(chatBox.lastChild);
-                    chatBox.innerHTML += `<div class="message assistant">${assistantResponse}</div><span class="blink">_</span></div>`;
+                    chatBox.innerHTML += `<div class="message assistant">${assistantResponse}<span class="blink"> _</span></div>`;
                 } else {
                     throw new Error('Unexpected response structure');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 chatBox.removeChild(chatBox.lastChild);
-                chatBox.innerHTML += `<div class="message assistant">Sorry, something went wrong. Please try again.</div><span class="blink">_</span></div>`;
+                chatBox.innerHTML += `<div class="message assistant">Sorry, something went wrong. Please try again.<span class="blink"> _</span></div>`;
             }
         
             // Scroll to the bottom of the chat box
