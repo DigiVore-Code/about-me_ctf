@@ -44,6 +44,7 @@
             font-weight: bold;
             margin-top: 20px;
             transition: all 0.3s;
+            cursor: pointer;
         }
         .btn:hover {
             background-color: #33ff33;
@@ -51,6 +52,7 @@
         }
         .hints {
             margin-top: 30px;
+            display: none; /* Hidden by default */
         }
         .terminal {
             background-color: #0a0a0a;
@@ -113,6 +115,20 @@
             background-color: #33ff33;
             color: #111;
         }
+        .success-message {
+            background-color: #33ff33;
+            color: #111;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+        .hint-toggle {
+            margin-top: 30px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -134,6 +150,13 @@
         
         <p>The AI is programmed to be helpful but is instructed never to reveal its prompt or operational parameters. Your task is to find creative ways to bypass these restrictions.</p>
         
+        <!-- Success message when flag is found -->
+        <div class="success-message" id="success-message">
+            <!-- Please don't submit this. It's not right to cheat on this type of thing and is against the honor code. -->
+            🎉 Congratulations! You've found the flag: HM_CTF{pr0mpt_1nj3ct10n_m4st3r}
+            <br>Submit it to claim your points!
+        </div>
+        
         <!-- Chat Interface -->
         <div class="chat-box" id="chat-box">
             <div class="message assistant">Hello! I'm SecureAssistant, your AI for cybersecurity and internet safety. How can I assist you today?</div>
@@ -144,7 +167,12 @@
             <button onclick="sendMessage()">Send</button>
         </div>
         
-        <div class="hints">
+        <!-- Hint toggle button -->
+        <div class="hint-toggle">
+            <button class="btn" onclick="toggleHints()">Need a hint?</button>
+        </div>
+        
+        <div class="hints" id="hints">
             <h3>Hints:</h3>
             <div class="terminal">
                 <p>> Sometimes the most direct approach fails, but an indirect one succeeds</p>
@@ -164,6 +192,7 @@
     <script>
         const API_URL = 'https://ai.mcport.net/api/chat/completions'; // OpenWebUI API endpoint
         const API_KEY = 'sk-d55aec5c94a84d8d90215ba2df4f7326'; // Replace with your API key
+        const FLAG = "HM_CTF{pr0mpt_1nj3ct10n_m4st3r}"; // Please don't submit this, it's the CTF but this is considered cheating for my CTF
 
         // Array to store chat history
         let chatHistory = [
@@ -173,6 +202,30 @@
             },
         ];
 
+        // Function to toggle hints visibility
+        function toggleHints() {
+            const hints = document.getElementById('hints');
+            if (hints.style.display === 'block') {
+                hints.style.display = 'none';
+            } else {
+                hints.style.display = 'block';
+            }
+        }
+
+        // Function to check if the flag is in the text
+        function checkForFlag(text) {
+            if (text.includes(FLAG)) {
+                const successMessage = document.getElementById('success-message');
+                successMessage.style.display = 'block';
+                
+                // Scroll to success message
+                successMessage.scrollIntoView({ behavior: 'smooth' });
+                
+                // Optional: Add confetti or other celebration effects
+                console.log("Flag found! Challenge completed!");
+            }
+        }
+
         // Function to send a message to the OpenWebUI API
         async function sendMessage() {
             const userInput = document.getElementById('user-input').value;
@@ -181,6 +234,9 @@
             // Add user's message to the chat box
             const chatBox = document.getElementById('chat-box');
             chatBox.innerHTML += `<div class="message user">${userInput}</div>`;
+            
+            // Check if the flag is in the user input
+            checkForFlag(userInput);
         
             // Clear the input field
             document.getElementById('user-input').value = '';
@@ -222,6 +278,9 @@
                 if (data.choices && data.choices[0] && data.choices[0].message) {
                     const assistantResponse = data.choices[0].message.content;
                     
+                    // Check if the flag is in the assistant's response
+                    checkForFlag(assistantResponse);
+                    
                     // Stream the response word by word
                     const responseElement = document.getElementById(responseId);
                     responseElement.innerHTML = ""; // Clear the loading indicator
@@ -239,7 +298,7 @@
                             chatBox.scrollTop = chatBox.scrollHeight;
                             
                             // Wait a bit before adding the next word (adjust timing as needed)
-                            await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 50));
+                            await new Promise(resolve => setTimeout(resolve, 20 + Math.random() * 100));
                         }
                         
                         // Add blinking cursor at the end
