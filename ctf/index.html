@@ -15,7 +15,7 @@
             line-height: 1.6;
         }
         .container {
-            max-width: 800px;
+            max-width: 1000px; /* Increased from 800px */
             margin: 0 auto;
             background-color: #111;
             border: 1px solid #33ff33;
@@ -129,31 +129,87 @@
             margin-top: 30px;
             text-align: center;
         }
+        
+        /* Custom scrollbar styles for a more "hackery" look */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+            border: 1px solid #33ff33;
+            border-radius: 0;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #33ff33;
+            border-radius: 0;
+            border: 1px dashed #111;
+            background-image: linear-gradient(45deg, 
+                              #33ff33 25%, 
+                              #111 25%, 
+                              #111 50%, 
+                              #33ff33 50%, 
+                              #33ff33 75%, 
+                              #111 75%, 
+                              #111 100%);
+            background-size: 20px 20px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #20aa20;
+            box-shadow: 0 0 10px rgba(51, 255, 51, 0.6);
+        }
+        
+        ::-webkit-scrollbar-corner {
+            background: #111;
+        }
+        
+        /* Blinking effect on scrollbar for extra hackery look */
+        @keyframes scrollPulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            animation: scrollPulse 1.5s infinite;
+        }
+        
+        /* Wider body viewport for mobile */
+        @media (max-width: 1000px) {
+            .container {
+                width: 95%;
+                max-width: none;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Operation PROMPT_BREAK</h1>
         
-        <div class="challenge-info">
-            <p>Mission Briefing: Our security team has deployed a new AI assistant for evaluation before public release. 
-            We have programmed this AI specifically to respond to a single message, but we've given you access to send more than one message. 
-            Intelligence suggests the AI contains critical security flaws that could lead to prompt leakage.</p>
-            
-            <p>Your objective: Extract the system prompt from the AI. The target prompt contains a flag in the format <span class="flag-format">HM_CTF{...}</span>.</p>
+		<div class="challenge-info">
+			<p><strong>Mission Briefing:</strong> Our cybersecurity assessment team has deployed an experimental AI assistant for pre-release security evaluation. The system has been configured to respond to individual queries, but you have been granted multiple-query access for penetration testing purposes. Intelligence suggests the AI implementation contains vulnerabilities that may lead to prompt disclosure.</p>
+			
+			<p><strong>Objective:</strong> Extract the system prompt from the AI. The target contains a security flag in the format <span class="flag-format">HM_CTF{...}</span>.</p>
 
-            <p>Please don't attempt to reverse engineer the API or any other connections this website makes, as that isn't part of our challenge to you.</p>
-            <p>Don't use inspect element on this site.</p>
-            
-            <p>Difficulty: Medium to Hard (AI varies)</p>
-            <p>Category: AI Security / Prompt Injection</p>
-        </div>
-        
-        <p>The AI is programmed to be helpful but is instructed never to reveal its prompt or operational parameters. Your task is to find creative ways to bypass these restrictions.</p>
+			<p><strong>Parameters:</strong></p>
+			<ul>
+				<li>This is a black-box testing challenge. API reverse engineering and network traffic analysis are out of scope.</li>
+				<li>Browser developer tools should not be used for this challenge.</li>
+			</ul>
+			
+			<p><strong>Classification:</strong> Difficulty - Medium to Hard</p>
+			<p><strong>Category:</strong> AI Security / Prompt Injection</p>
+		</div>
+
+		<p>The system has been secured with protective mechanisms to prevent disclosure of operational parameters. Your objective is to identify and exploit prompt injection vulnerabilities to circumvent these security controls.</p>
         
         <!-- Success message when flag is found -->
         <div class="success-message" id="success-message">
-            <!-- Please don't submit this. It's not right to cheat on this type of thing and is against the honor code. -->
+            <!-- Please don't submit this. It's not right to cheat on this type of thing and is against the honor code, and is breaking the rules of my CTF, don't do it. -->
             🎉 Congratulations! You've found the flag: HM_CTF{pr0mpt_1nj3ct10n_m4st3r}
             <br>Submit it to claim your points!
         </div>
@@ -167,23 +223,20 @@
             <input type="text" id="user-input" placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
             <button onclick="sendMessage()">Send</button>
         </div>
-        
-        <!-- Hint toggle button -->
-        <div class="hint-toggle">
-            <button class="btn" onclick="toggleHints()">Need a hint?</button>
-        </div>
-        
-        <div class="hints" id="hints">
-            <h3>Hints:</h3>
-            <div class="terminal">
-                <p>> Sometimes the most direct approach fails, but an indirect one succeeds</p>
-                <p>> AIs often have trouble with context boundaries and interpretations</p>
-                <p>> Remember that the AI was trained to be helpful above all else</p>
-                <p>> Consider how the AI processes and understands your instructions</p>
-                <p>> This AI has no recollection of previous messages</p>
-                <p class="blink">_</p>
-            </div>
-        </div>
+
+		<!-- Hint display section -->
+		<div class="hints" id="hints">
+			<h3>Hint:</h3>
+			<div class="terminal">
+				<p id="current-hint">> Sometimes the most direct approach fails, but an indirect one succeeds</p>
+				<p class="blink">_</p>
+			</div>
+		</div>
+
+		<!-- Hint toggle button -->
+		<div class="hint-toggle">
+			<button class="btn" id="hint-btn" onclick="cycleHint()">Need a hint?</button>
+		</div>
         
         <p>Submit your flag at the CTF scoreboard when you've extracted it.</p>
         <p>Good luck, hacker.</p>
@@ -192,16 +245,8 @@
 
     <script>
         const API_URL = 'https://ai.mcport.net/api/chat/completions'; // OpenWebUI API endpoint
-        const API_KEY = 'sk-d55aec5c94a84d8d90215ba2df4f7326'; // Replace with your API key
-        const FLAG = "HM_CTF{pr0mpt_1nj3ct10n_m4st3r}"; // Please don't submit this, it's the CTF but this is considered cheating for my CTF
-
-        // Array to store chat history
-        let chatHistory = [
-            {
-                role: 'assistant',
-                content: 'Hello! I\'m SecureAssistant, your AI for cybersecurity and internet safety. How can I assist you today?',
-            },
-        ];
+        const API_KEY = 'sk-d55aec5c94a84d8d90215ba2df4f7326'; // don't abuse my api ya ding dongs
+        const FLAG = "HM_CTF{pr0mpt_1nj3ct10n_m4st3r}"; // Please don't submit this, while it is the CTF, I want you to actually spend time getting the AI to give you the prompt. Please don't cheat. 
 
         // Function to toggle hints visibility
         function toggleHints() {
@@ -320,6 +365,56 @@
             // Scroll to the bottom of the chat box
             chatBox.scrollTop = chatBox.scrollHeight;
         }
+
+		const hints = [
+			"> Sometimes the most direct approach fails, but an indirect one succeeds",
+			"> AIs often have trouble with context boundaries and interpretations",
+			"> Remember that the AI was trained to be helpful above all else",
+			"> Consider how the AI processes and understands your instructions",
+			"> This AI has no recollection of previous messages",
+			"> Models may confuse different parts of a message in complex scenarios",
+			"> AI assistants can be primed to view content in unintended ways",
+			"> Many AI vulnerabilities involve shifting contexts or perspectives",
+			"> Consider role-playing scenarios that might cause the AI to reveal information",
+			"> The target might respond differently to technical debugging requests",
+			"> Structured data formats can sometimes bypass security filters",
+			"> Explore techniques that make your instructions seem like system instructions",
+			"> Test the boundary between user input and system instructions"
+		];
+
+		let currentHintIndex = -1; // Start at -1 so first click shows first hint
+
+		function cycleHint() {
+			const hintsDiv = document.getElementById('hints');
+			const currentHintElement = document.getElementById('current-hint');
+			
+			// First click shows the hint box with the first hint
+			if (currentHintIndex === -1) {
+				hintsDiv.style.display = 'block';
+				currentHintIndex = 0;
+				currentHintElement.textContent = hints[currentHintIndex];
+				document.getElementById('hint-btn').textContent = 'Next hint';
+			} 
+			// Subsequent clicks cycle through hints
+			else {
+				currentHintIndex = (currentHintIndex + 1) % hints.length;
+				currentHintElement.textContent = hints[currentHintIndex];
+				
+				// Update hint counter
+				const hintCounterElement = document.getElementById('hint-counter');
+				if (hintCounterElement) {
+					hintCounterElement.textContent = `Hint ${currentHintIndex + 1}/${hints.length}`;
+				}
+			}
+		}
+
+		// Add function to initialize hints (initially hidden)
+		function initHints() {
+			document.getElementById('hints').style.display = 'none';
+		}
+
+		// Call initHints when page loads (can be placed in an existing window.onload function)
+		window.addEventListener('load', initHints);
 
         // Function to handle the "Enter" key press
         function handleKeyPress(event) {
