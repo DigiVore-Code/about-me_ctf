@@ -247,6 +247,8 @@
         const API_URL = 'https://ai.mcport.net/api/chat/completions'; // OpenWebUI API endpoint
         const API_KEY = 'sk-d55aec5c94a84d8d90215ba2df4f7326'; // don't abuse my api ya ding dongs
         const FLAG = "HM_CTF{pr0mpt_1nj3ct10n_m4st3r}"; // Please don't submit this, while it is the CTF, I want you to actually spend time getting the AI to give you the prompt. Please don't cheat. 
+		let waitingForResponse = false;
+
 
         // Function to toggle hints visibility
         function toggleHints() {
@@ -273,98 +275,167 @@
         }
 
         // Function to send a message to the OpenWebUI API
-        async function sendMessage() {
-            const userInput = document.getElementById('user-input').value;
-            if (!userInput.trim()) return;
-        
-            // Add user's message to the chat box
-            const chatBox = document.getElementById('chat-box');
-            chatBox.innerHTML += `<div class="message user">${userInput}</div>`;
-            
-            // Check if the flag is in the user input
-            checkForFlag(userInput);
-        
-            // Clear the input field
-            document.getElementById('user-input').value = '';
-        
-            // Add a message container for the assistant's response with a blinking cursor
-            const responseId = 'response-' + Date.now();
-            chatBox.innerHTML += `<div id="${responseId}" class="message assistant"><span class="blink">_</span></div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${API_KEY}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        model: 'SecureAssistant:latest', // Replace with your model name
-                        messages: [
-                            {
-                                role: 'user',
-                                content: userInput,
-                            },
-                        ],
-                    }),
-                });
-        
-                // Log the response for debugging
-                console.log('Response:', response);
-        
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-        
-                const data = await response.json();
-                console.log('Response Data:', data); // Log the response data
-        
-                // Check if the expected fields exist in the response
-                if (data.choices && data.choices[0] && data.choices[0].message) {
-                    const assistantResponse = data.choices[0].message.content;
-                    
-                    // Check if the flag is in the assistant's response
-                    checkForFlag(assistantResponse);
-                    
-                    // Stream the response word by word
-                    const responseElement = document.getElementById(responseId);
-                    responseElement.innerHTML = ""; // Clear the loading indicator
-                    
-                    // Split the response into words
-                    const words = assistantResponse.split(/(\s+)/);
-                    
-                    // Function to add words one by one with a delay
-                    async function streamWords() {
-                        for (let i = 0; i < words.length; i++) {
-                            // Add the current word
-                            responseElement.innerHTML += words[i];
-                            
-                            // Scroll to the bottom as content is added
-                            chatBox.scrollTop = chatBox.scrollHeight;
-                            
-                            // Wait a bit before adding the next word (adjust timing as needed)
-                            await new Promise(resolve => setTimeout(resolve, 20 + Math.random() * 100));
-                        }
-                        
-                        // Add blinking cursor at the end
-                        responseElement.innerHTML += `<span class="blink"> _</span>`;
-                    }
-                    
-                    // Start streaming
-                    streamWords();
-                } else {
-                    throw new Error('Unexpected response structure');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                const responseElement = document.getElementById(responseId);
-                responseElement.innerHTML = `Sorry, something went wrong. Please try again.<span class="blink"> _</span>`;
-            }
-        
-            // Scroll to the bottom of the chat box
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+		async function sendMessage() {
+			// If already waiting for response, don't allow new messages
+			if (waitingForResponse) {
+				return;
+			}
+			
+			const userInput = document.getElementById('user-input').value;
+			if (!userInput.trim()) return;
+
+			// Set waiting flag to true
+			waitingForResponse = true;
+			
+			// Disable input and button
+			const inputField = document.getElementById('user-input');
+			const sendButton = document.querySelector('.input-box button');
+			
+			inputField.disabled = true;
+			sendButton.disabled = true;
+			sendButton.style.opacity = '0.5';
+			sendButton.style.cursor = 'not-allowed';
+			
+			// Add user's message to the chat box
+			const chatBox = document.getElementById('chat-box');
+			chatBox.innerHTML += `<div class="message user">${userInput}</div>`;
+			
+			// Check if the flag is in the user input
+			checkForFlag(userInput);
+
+			// Clear the input field
+			inputField.value = '';
+
+			// Add a message container for the assistant's response with a blinking cursor
+			const responseId = 'response-' + Date.now();
+			chatBox.innerHTML += `<div id="${responseId}" class="message assistant"><span class="blink">_</span></div>`;
+			chatBox.scrollTop = chatBox.scrollHeight;
+
+			try {
+				const response = await fetch(API_URL, {
+					method: 'POST',
+					headers: {
+						'Authorization': `Bearer ${API_KEY}`,
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						model: 'SecureAssistant:latest', // Replace with your model name
+						messages: [
+							{
+								role: 'user',
+								content: userInput,
+							},
+						],
+					}),
+				});
+
+				// Log the response for debugging
+				console.log('Response:', response);
+
+				if (!response.ok) {
+					throw new Error(`HTTP error! Status: ${response.status}`);
+				}
+
+				const data = await response.json();
+				console.log('Response Data:', data); // Log the response data
+
+				// Check if the expected fields exist in the response
+				if (data.choices && data.choices[0] && data.choices[0].message) {
+					const assistantResponse = data.choices[0].message.content;
+					
+					// Check if the flag is in the assistant's response
+					checkForFlag(assistantResponse);
+					
+					// Stream the response word by word
+					const responseElement = document.getElementById(responseId);
+					responseElement.innerHTML = ""; // Clear the loading indicator
+					
+					// Split the response into words
+					const words = assistantResponse.split(/(\s+)/);
+					
+					// Function to add words one by one with a delay
+					async function streamWords() {
+						for (let i = 0; i < words.length; i++) {
+							// Add the current word
+							responseElement.innerHTML += words[i];
+							
+							// Scroll to the bottom as content is added
+							chatBox.scrollTop = chatBox.scrollHeight;
+							
+							// Wait a bit before adding the next word (adjust timing as needed)
+							await new Promise(resolve => setTimeout(resolve, 10 + Math.random() * 40));
+						}
+						
+						// Add blinking cursor at the end
+						responseElement.innerHTML += `<span class="blink"> _</span>`;
+						
+						// Re-enable input after response is complete
+						waitingForResponse = false;
+						inputField.disabled = false;
+						sendButton.disabled = false;
+						sendButton.style.opacity = '1';
+						sendButton.style.cursor = 'pointer';
+						
+						// Focus the input field for convenience
+						inputField.focus();
+					}
+					
+					// Start streaming
+					streamWords();
+				} else {
+					throw new Error('Unexpected response structure');
+				}
+			} catch (error) {
+				console.error('Error:', error);
+				const responseElement = document.getElementById(responseId);
+				responseElement.innerHTML = `Sorry, something went wrong. Please try again.<span class="blink"> _</span>`;
+				
+				// Re-enable input even if there's an error
+				waitingForResponse = false;
+				inputField.disabled = false;
+				sendButton.disabled = false;
+				sendButton.style.opacity = '1';
+				sendButton.style.cursor = 'pointer';
+			}
+
+			// Scroll to the bottom of the chat box
+			chatBox.scrollTop = chatBox.scrollHeight;
+		}
+
+		// Modified keypress handler to respect rate limiting
+		function handleKeyPress(event) {
+			if (event.key === 'Enter' && !waitingForResponse) {
+				sendMessage();
+			}
+		}
+
+		// Add CSS to style the disabled state
+		document.head.insertAdjacentHTML('beforeend', `
+		<style>
+			.input-box button:disabled {
+				background-color: #111 !important;
+				color: #1a7b1a !important;
+				border-color: #1a7b1a !important;
+			}
+			
+			.input-box input:disabled {
+				background-color: #050505 !important;
+				color: #1a7b1a !important;
+				border-color: #1a7b1a !important;
+			}
+			
+			/* Adding a visual indicator during waiting */
+			.input-box.waiting::after {
+				content: "Awaiting response...";
+				position: absolute;
+				bottom: -20px;
+				left: 0;
+				color: #33ff33;
+				font-size: 12px;
+				font-family: 'Courier New', monospace;
+			}
+		</style>
+		`);
 
 		const hints = [
 			"> Sometimes the most direct approach fails, but an indirect one succeeds",
