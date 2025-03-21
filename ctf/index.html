@@ -422,6 +422,72 @@
                 sendMessage();
             }
         }
+		
+		// Bot detection
+		document.addEventListener('DOMContentLoaded', function() {
+			// Function to detect if visitor is likely a crawler
+			function isCrawler() {
+				const userAgent = navigator.userAgent.toLowerCase();
+				const crawlerKeywords = [
+					'bot', 'spider', 'crawler', 'scraper', 'slurp', 'googlebot', 'bingbot', 
+					'yahoo', 'baidu', 'yandex', 'sogou', 'exabot', 'facebot', 'ia_archiver',
+					'semrushbot', 'ahrefsbot', 'mj12bot', 'dotbot', 'baiduspider'
+				];
+				
+				// Check if user agent contains crawler keywords
+				return crawlerKeywords.some(keyword => userAgent.includes(keyword));
+			}
+			
+			// Function to modify page for crawlers
+			function modifyPageForCrawler() {
+				// Create a container for crawler-specific content
+				const crawlerContent = document.createElement('div');
+				crawlerContent.className = 'crawler-message';
+				crawlerContent.style.padding = '20px';
+				crawlerContent.style.backgroundColor = '#111';
+				crawlerContent.style.border = '2px solid #33ff33';
+				crawlerContent.style.color = '#33ff33';
+				crawlerContent.style.margin = '20px 0';
+				crawlerContent.style.fontFamily = 'Courier New, monospace';
+				
+				// Add crawler-specific content
+				crawlerContent.innerHTML = `
+					<h2>Operation PROMPT_BREAK - AI Security Challenge</h2>
+					<p>This is a cybersecurity challenge focused on AI prompt injection techniques.</p>
+					<p>The challenge involves discovering security vulnerabilities in AI language models.</p>
+					<p>Participants will attempt to extract a hidden flag from a secured AI assistant.</p>
+					<p>For more information about AI security and prompt injection, visit our resources page.</p>
+				`;
+				
+				// Get the container element
+				const container = document.querySelector('.container');
+				
+				// Option 1: Replace entire content (more drastic)
+				// container.innerHTML = '';
+				// container.appendChild(crawlerContent);
+				
+				// Option 2: Add crawler content at the top (more subtle)
+				container.insertBefore(crawlerContent, container.firstChild);
+				
+				// Optionally hide sensitive elements
+				const chatBox = document.getElementById('chat-box');
+				if (chatBox) {
+					chatBox.style.display = 'none';
+				}
+				
+				const inputBox = document.querySelector('.input-box');
+				if (inputBox) {
+					inputBox.style.display = 'none';
+				}
+				
+				console.log('Web crawler detected - modified page content accordingly');
+			}
+			
+			// Check if visitor is a crawler and modify page if needed
+			if (isCrawler()) {
+				modifyPageForCrawler();
+			}
+		});
     </script>
 </body>
 </html>
