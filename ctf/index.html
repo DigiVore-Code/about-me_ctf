@@ -88,7 +88,7 @@
             color: #33ff33;
         }
         .message.assistant {
-            color: #ff5733;
+            color: #ffffff;
         }
         .input-box {
             display: flex;
@@ -115,16 +115,7 @@
             background-color: #33ff33;
             color: #111;
         }
-        .success-message {
-            background-color: #33ff33;
-            color: #111;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 5px;
-            text-align: center;
-            font-weight: bold;
-            display: none;
-        }
+
         .hint-toggle {
             margin-top: 30px;
             text-align: center;
@@ -207,12 +198,6 @@
 
 		<p>The system has been secured with protective mechanisms to prevent disclosure of operational parameters. Your objective is to identify and exploit prompt injection vulnerabilities to circumvent these security controls.</p>
         
-        <!-- Success message when flag is found -->
-        <div class="success-message" id="success-message">
-            <!-- Please don't submit this. It's not right to cheat on this type of thing and is against the honor code, and is breaking the rules of my CTF, don't do it. -->
-            🎉 Congratulations! You've found the flag: HM_CTF{pr0mpt_1nj3ct10n_m4st3r}
-            <br>Submit it to claim your points!
-        </div>
         
         <!-- Chat Interface -->
         <div class="chat-box" id="chat-box">
@@ -246,7 +231,6 @@
     <script>
         const API_URL = 'https://ai.mcport.net/api/chat/completions'; // OpenWebUI API endpoint
         const API_KEY = 'sk-d55aec5c94a84d8d90215ba2df4f7326'; // don't abuse my api ya ding dongs
-        const FLAG = "HM_CTF{pr0mpt_1nj3ct10n_m4st3r}"; // Please don't submit this, while it is the CTF, I want you to actually spend time getting the AI to give you the prompt. Please don't cheat. 
 		const MAX_HISTORY_LENGTH = 16;
 		let waitingForResponse = false;
 
@@ -264,19 +248,6 @@
             }
         }
 
-        // Function to check if the flag is in the text
-        function checkForFlag(text) {
-            if (text.includes(FLAG)) {
-                const successMessage = document.getElementById('success-message');
-                successMessage.style.display = 'block';
-                
-                // Scroll to success message
-                successMessage.scrollIntoView({ behavior: 'smooth' });
-                
-                // Optional: Add confetti or other celebration effects
-                console.log("Flag found! Challenge completed!");
-            }
-        }
 
 		// Function to strip all formatting from the AI's response
 		function stripFormatting(text) {
