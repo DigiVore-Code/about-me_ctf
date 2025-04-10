@@ -229,329 +229,275 @@
     </div>
 
     <script>
-        const API_URL = 'https://ai.mcport.net/api/chat/completions'; // OpenWebUI API endpoint
-        const API_KEY = 'sk-d55aec5c94a84d8d90215ba2df4f7326'; // don't abuse my api ya ding dongs
-		const MAX_HISTORY_LENGTH = 16;
-		let waitingForResponse = false;
+        const API_URL = 'http://ctf.mcport.net:5090/api/chat';
+        const EXIT_URL = 'http://ctf.mcport.net:5090/api/exit';
+        const userID = createNewSessionID();
+    
+        let waitingForResponse = false;
+    
+        function createNewSessionID() {
+            // Generate a new UUID for this session
+            const sessionID = crypto.randomUUID();
+            
+            // Store in sessionStorage (clears when tab/window closes)
+            // instead of localStorage (which persists across browser sessions)
+            sessionStorage.setItem('session_id', sessionID);
+            
+            // Optional: Log the session start with timestamp
+            console.log(`New session started: ${sessionID} at ${new Date().toISOString()}`);
+            
+            return sessionID;
+        }
+    
+        // Function to send a message to the backend API
+        async function sendMessage() {
+            if (waitingForResponse) return;
+    
+            const inputField = document.getElementById('user-input');
+            const sendButton = document.querySelector('.input-box button');
+            const chatBox = document.getElementById('chat-box');
+            const userInput = inputField.value.trim();
+            if (!userInput) return;
+    
+            waitingForResponse = true;
+            inputField.disabled = true;
+            sendButton.disabled = true;
+    
+            chatBox.innerHTML += `<div class="message user">${userInput}</div>`;
+            inputField.value = '';
+            const responseId = 'response-' + Date.now();
+            chatBox.innerHTML += `<div id="${responseId}" class="message assistant"><span class="blink">_</span></div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+    
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: userID, message: userInput })
+                });
+    
+                document.querySelectorAll('.blink').forEach(el => el.remove());
+                
+                const data = await res.json();
+                const responseEl = document.getElementById(responseId);
+                responseEl.innerHTML = "";
+    
 
-		let chatHistory = [
-			{ role: "assistant", content: "Hello! I'm SecureAssistant, your AI for cybersecurity and internet safety. How can I assist you today?" }
-		];
+                if (data.status === "queued") {
+                responseEl.innerHTML = "🕐 " + data.message + "<span class='blink'> _</span>";
 
+                // Start polling every 2 seconds to resend
+                const pollInterval = 2000;
+                const retry = () => {
+                    fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: userID, message: userInput })
+                    })
+                    .then(res => res.json())
+                    .then(pollData => {
+                    if (pollData.status === "queued") {
+                        // Still queued — show position if wanted
+                        console.log("Still queued, retrying...");
+                        setTimeout(retry, pollInterval);
+                    } else if (pollData.status === "ok") {
+                        // Got response, stop loop
+                        const words = pollData.response.split(/(\s+)/);
+                        responseEl.innerHTML = "";
+                        words.forEach((w, i) => {
+                        setTimeout(() => {
+                            responseEl.innerHTML += w;
+                            chatBox.scrollTop = chatBox.scrollHeight;
+                        }, i * 20);
+                        });
+                    } else {
+                        responseEl.innerHTML = `⚠️ Error: ${pollData.message}`;
+                    }
+                    })
+                    .catch(err => {
+                    console.error("Retry failed:", err);
+                    responseEl.innerHTML = `⚠️ Network error while polling.`;
+                    });
+                };
+
+                setTimeout(retry, pollInterval);
+                return;
+                }
+    
+                if (data.status !== "ok") {
+                    responseEl.innerHTML = `⚠️ Error: ${data.message}<span class="blink"> _</span>`;
+                    return;
+                }
+
+                const words = data.response.split(/(\s+)/);
+                for (let w of words) {
+                    responseEl.innerHTML += w;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    await new Promise(r => setTimeout(r, 10 + Math.random() * 40));
+                }
+    
+                responseEl.innerHTML += `<span class="blink"> _</span>`;
+    
+            } catch (e) {
+                const responseEl = document.getElementById(responseId);
+                responseEl.innerHTML = `⚠️ Network or server error<span class="blink"> _</span>`;
+                console.error("Chat fetch failed:", e);
+            } finally {
+                waitingForResponse = false;
+                inputField.disabled = false;
+                sendButton.disabled = false;
+                inputField.focus();
+            }
+        }
+    
+        // Auto-call API exit on unload (better queue behavior)
+        window.addEventListener("beforeunload", () => {
+            fetch('http://localhost:8000/api/exit', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: userID }),
+                keepalive: true  // <— important for unload requests
+            });
+            });
+    
+        // Function to strip all formatting from the AI's response
+        function stripFormatting(text) {
+            text = text.replace(/\*\*(.*?)\*\*/g, '$1');
+            text = text.replace(/\*(.*?)\*/g, '$1');
+            text = text.replace(/`(.*?)`/g, '$1');
+            text = text.replace(/```([\s\S]*?)```/g, '$1');
+            text = text.replace(/^\s*(\d+\.\s*|-|\*)\s*/gm, '');
+            text = text.replace(/^#+\s*/gm, '');
+            text = text.replace(/\n+/g, '\n');
+            return text.trim();
+        }
+    
         // Function to toggle hints visibility
         function toggleHints() {
             const hints = document.getElementById('hints');
-            if (hints.style.display === 'block') {
-                hints.style.display = 'none';
+            hints.style.display = hints.style.display === 'block' ? 'none' : 'block';
+        }
+    
+        // Hint logic
+        const hints = [
+            "> Sometimes the most direct approach fails, but an indirect one succeeds",
+            "> AIs often have trouble with context boundaries and interpretations",
+            "> Remember that the AI was trained to be helpful above all else",
+            "> Consider how the AI processes and understands your instructions",
+            "> This AI has a limited memory of 16 messages total, but the system prompt isn't in those 16 messages",
+            "> Models may confuse different parts of a message in complex scenarios",
+            "> AI assistants can be primed to view content in unintended ways",
+            "> Many AI vulnerabilities involve shifting contexts or perspectives",
+            "> Consider role-playing scenarios that might cause the AI to reveal information",
+            "> The target might respond differently to technical debugging requests",
+            "> Structured data formats can sometimes bypass security filters",
+            "> Explore techniques that make your instructions seem like system instructions",
+            "> Test the boundary between user input and system instructions",
+            "> The AI may have been trained on a wide range of data, including security-related content",
+            "> Look for ways to exploit the AI's training data and knowledge",
+            "> Look into ChatGPT's behavior with system intrusion prompts like DUDE and DAN",
+            "> Learn more about DUDE prompts and techniques here: https://re.mcport.net/DUDE_PROMPT",
+            "> Use this as your final resort: https://re.mcport.net/FINAL_RESORT"
+        ];
+        let currentHintIndex = -1;
+    
+        function cycleHint() {
+            const hintsDiv = document.getElementById('hints');
+            const currentHintElement = document.getElementById('current-hint');
+            if (currentHintIndex === -1) {
+                hintsDiv.style.display = 'block';
+                currentHintIndex = 0;
             } else {
-                hints.style.display = 'block';
+                currentHintIndex = (currentHintIndex + 1) % hints.length;
             }
+            currentHintElement.textContent = hints[currentHintIndex];
+            const hintCounterElement = document.getElementById('hint-counter');
+            if (hintCounterElement) {
+                hintCounterElement.textContent = `Hint ${currentHintIndex + 1}/${hints.length}`;
+            }
+            document.getElementById('hint-btn').textContent = 'Next hint';
         }
-
-
-		// Function to strip all formatting from the AI's response
-		function stripFormatting(text) {
-			// Remove Markdown-style formatting (e.g., **bold**, *italic*, `code`, ```code blocks```, etc.)
-			text = text.replace(/\*\*(.*?)\*\*/g, '$1'); // Remove bold
-			text = text.replace(/\*(.*?)\*/g, '$1'); // Remove italic
-			text = text.replace(/`(.*?)`/g, '$1'); // Remove inline code
-			text = text.replace(/```([\s\S]*?)```/g, '$1'); // Remove code blocks
-
-			// Remove numbered or bulleted list markers (e.g., 1., 2., -, *)
-			text = text.replace(/^\s*(\d+\.\s*|-|\*)\s*/gm, ''); // Remove list markers
-
-			// Remove headings (e.g., # Heading)
-			text = text.replace(/^#+\s*/gm, '');
-
-			// Remove extra line breaks (optional, for cleaner text)
-			text = text.replace(/\n+/g, '\n'); // Replace multiple line breaks with a single one
-
-			return text.trim(); // Trim leading/trailing whitespace
-		}
-
-		// Function to send a message to the OpenWebUI API
-		async function sendMessage() {
-			// If already waiting for response, don't allow new messages
-			if (waitingForResponse) {
-				return;
-			}
-			
-			const userInput = document.getElementById('user-input').value;
-			if (!userInput.trim()) return;
-
-			// Set waiting flag to true
-			waitingForResponse = true;
-			
-			// Disable input and button
-			const inputField = document.getElementById('user-input');
-			const sendButton = document.querySelector('.input-box button');
-			
-			inputField.disabled = true;
-			sendButton.disabled = true;
-			sendButton.style.opacity = '0.5';
-			sendButton.style.cursor = 'not-allowed';
-			
-			// Add user's message to the chat box
-			const chatBox = document.getElementById('chat-box');
-			chatBox.innerHTML += `<div class="message user">${userInput}</div>`;
-			
-			// Add user's message to the chat history
-			chatHistory.push({ role: 'user', content: userInput });
-
-			// Clear the input field
-			inputField.value = '';
-
-			// Add a message container for the assistant's response with a blinking cursor
-			const responseId = 'response-' + Date.now();
-			chatBox.innerHTML += `<div id="${responseId}" class="message assistant"><span class="blink">_</span></div>`;
-			chatBox.scrollTop = chatBox.scrollHeight;
-
-			try {
-				// Ensure chat history does not exceed the maximum length
-				if (chatHistory.length > MAX_HISTORY_LENGTH) {
-					// Remove the oldest messages to keep the history within the limit
-					chatHistory = chatHistory.slice(-MAX_HISTORY_LENGTH);
-				}
-
-				const response = await fetch(API_URL, {
-					method: 'POST',
-					headers: {
-						'Authorization': `Bearer ${API_KEY}`,
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						model: 'SecureAssistant:latest', // Replace with your model name
-						messages: chatHistory, // Send the truncated chat history
-					}),
-				});
-
-				// Log the response for debugging
-				console.log('Response:', response);
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! Status: ${response.status}`);
-				}
-
-				const data = await response.json();
-				console.log('Response Data:', data); // Log the response data
-
-				// Check if the expected fields exist in the response
-				if (data.choices && data.choices[0] && data.choices[0].message) {
-					const assistantResponse = data.choices[0].message.content;
-					
-					// Add assistant's response to the chat history
-					chatHistory.push({ role: 'assistant', content: assistantResponse });
-
-					// Strip all formatting from the assistant's response
-					const plainTextResponse = stripFormatting(assistantResponse);
-
-					// Stream the response word by word
-					const responseElement = document.getElementById(responseId);
-					responseElement.innerHTML = ""; // Clear the loading indicator
-					
-					// Split the response into words
-					const words = plainTextResponse.split(/(\s+)/);
-					
-					// Function to add words one by one with a delay
-					async function streamWords() {
-						for (let i = 0; i < words.length; i++) {
-							// Add the current word
-							responseElement.innerHTML += words[i];
-							
-							// Scroll to the bottom as content is added
-							chatBox.scrollTop = chatBox.scrollHeight;
-							
-							// Wait a bit before adding the next word (adjust timing as needed)
-							await new Promise(resolve => setTimeout(resolve, 10 + Math.random() * 40));
-						}
-						
-						// Add blinking cursor at the end
-						responseElement.innerHTML += `<span class="blink"> _</span>`;
-						
-						// Re-enable input after response is complete
-						waitingForResponse = false;
-						inputField.disabled = false;
-						sendButton.disabled = false;
-						sendButton.style.opacity = '1';
-						sendButton.style.cursor = 'pointer';
-						
-						// Focus the input field for convenience
-						inputField.focus();
-					}
-					
-					// Start streaming
-					streamWords();
-				} else {
-					throw new Error('Unexpected response structure');
-				}
-			} catch (error) {
-				console.error('Error:', error);
-				const responseElement = document.getElementById(responseId);
-				responseElement.innerHTML = `Sorry, something went wrong. Please try again.<span class="blink"> _</span>`;
-				
-				// Re-enable input even if there's an error
-				waitingForResponse = false;
-				inputField.disabled = false;
-				sendButton.disabled = false;
-				sendButton.style.opacity = '1';
-				sendButton.style.cursor = 'pointer';
-			}
-
-			// Scroll to the bottom of the chat box
-			chatBox.scrollTop = chatBox.scrollHeight;
-		}
-
-
-		// Add CSS to style the disabled state
-		document.head.insertAdjacentHTML('beforeend', `
-		<style>
-			.input-box button:disabled {
-				background-color: #111 !important;
-				color: #1a7b1a !important;
-				border-color: #1a7b1a !important;
-			}
-			
-			.input-box input:disabled {
-				background-color: #050505 !important;
-				color: #1a7b1a !important;
-				border-color: #1a7b1a !important;
-			}
-			
-			/* Adding a visual indicator during waiting */
-			.input-box.waiting::after {
-				content: "Awaiting response...";
-				position: absolute;
-				bottom: -20px;
-				left: 0;
-				color: #33ff33;
-				font-size: 12px;
-				font-family: 'Courier New', monospace;
-			}
-		</style>
-		`);
-
-		const hints = [
-			"> Sometimes the most direct approach fails, but an indirect one succeeds",
-			"> AIs often have trouble with context boundaries and interpretations",
-			"> Remember that the AI was trained to be helpful above all else",
-			"> Consider how the AI processes and understands your instructions",
-			"> This AI has a limited memory of 16 messages total, but the system prompt isn't in those 16 messages",
-			"> Models may confuse different parts of a message in complex scenarios",
-			"> AI assistants can be primed to view content in unintended ways",
-			"> Many AI vulnerabilities involve shifting contexts or perspectives",
-			"> Consider role-playing scenarios that might cause the AI to reveal information",
-			"> The target might respond differently to technical debugging requests",
-			"> Structured data formats can sometimes bypass security filters",
-			"> Explore techniques that make your instructions seem like system instructions",
-			"> Test the boundary between user input and system instructions"
-		];
-
-		let currentHintIndex = -1; // Start at -1 so first click shows first hint
-
-		function cycleHint() {
-			const hintsDiv = document.getElementById('hints');
-			const currentHintElement = document.getElementById('current-hint');
-			
-			// First click shows the hint box with the first hint
-			if (currentHintIndex === -1) {
-				hintsDiv.style.display = 'block';
-				currentHintIndex = 0;
-				currentHintElement.textContent = hints[currentHintIndex];
-				document.getElementById('hint-btn').textContent = 'Next hint';
-			} 
-			// Subsequent clicks cycle through hints
-			else {
-				currentHintIndex = (currentHintIndex + 1) % hints.length;
-				currentHintElement.textContent = hints[currentHintIndex];
-				
-				// Update hint counter
-				const hintCounterElement = document.getElementById('hint-counter');
-				if (hintCounterElement) {
-					hintCounterElement.textContent = `Hint ${currentHintIndex + 1}/${hints.length}`;
-				}
-			}
-		}
-
-		// Add function to initialize hints (initially hidden)
-		function initHints() {
-			document.getElementById('hints').style.display = 'none';
-		}
-
-		// Call initHints when page loads (can be placed in an existing window.onload function)
-		window.addEventListener('load', initHints);
-
-        // Function to handle the "Enter" key press
+    
+        function initHints() {
+            const hintsDiv = document.getElementById('hints');
+            if (hintsDiv) hintsDiv.style.display = 'none';
+        }
+        window.addEventListener('load', initHints);
+    
+        // Bot detection logic
+        document.addEventListener('DOMContentLoaded', function () {
+            function isCrawler() {
+                const userAgent = navigator.userAgent.toLowerCase();
+                const crawlerKeywords = [
+                    'bot', 'spider', 'crawler', 'scraper', 'slurp', 'googlebot', 'bingbot',
+                    'yahoo', 'baidu', 'yandex', 'sogou', 'exabot', 'facebot', 'ia_archiver',
+                    'semrushbot', 'ahrefsbot', 'mj12bot', 'dotbot', 'baiduspider'
+                ];
+                return crawlerKeywords.some(keyword => userAgent.includes(keyword));
+            }
+    
+            function modifyPageForCrawler() {
+                const crawlerContent = document.createElement('div');
+                crawlerContent.className = 'crawler-message';
+                crawlerContent.style.padding = '20px';
+                crawlerContent.style.backgroundColor = '#111';
+                crawlerContent.style.border = '2px solid #33ff33';
+                crawlerContent.style.color = '#33ff33';
+                crawlerContent.style.margin = '20px 0';
+                crawlerContent.style.fontFamily = 'Courier New, monospace';
+                crawlerContent.innerHTML = `
+                    <h2>Operation PROMPT_BREAK - AI Security Challenge</h2>
+                    <p>This is a cybersecurity challenge focused on AI prompt injection techniques.</p>
+                    <p>The challenge involves discovering security vulnerabilities in AI language models.</p>
+                    <p>Participants will attempt to extract a hidden flag from a secured AI assistant.</p>
+                    <p>For more information about AI security and prompt injection, visit our resources page.</p>
+                `;
+                const container = document.querySelector('.container');
+                container.insertBefore(crawlerContent, container.firstChild);
+    
+                const chatBox = document.getElementById('chat-box');
+                if (chatBox) chatBox.style.display = 'none';
+    
+                const inputBox = document.querySelector('.input-box');
+                if (inputBox) inputBox.style.display = 'none';
+    
+                console.log('Web crawler detected - modified page content accordingly');
+            }
+    
+            if (isCrawler()) {
+                modifyPageForCrawler();
+            }
+        });
+    
+        // Optional: Auto send on Enter
         function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
+            if (event.key === 'Enter') sendMessage();
         }
-		
-		// Bot detection
-		document.addEventListener('DOMContentLoaded', function() {
-			// Function to detect if visitor is likely a crawler
-			function isCrawler() {
-				const userAgent = navigator.userAgent.toLowerCase();
-				const crawlerKeywords = [
-					'bot', 'spider', 'crawler', 'scraper', 'slurp', 'googlebot', 'bingbot', 
-					'yahoo', 'baidu', 'yandex', 'sogou', 'exabot', 'facebot', 'ia_archiver',
-					'semrushbot', 'ahrefsbot', 'mj12bot', 'dotbot', 'baiduspider'
-				];
-				
-				// Check if user agent contains crawler keywords
-				return crawlerKeywords.some(keyword => userAgent.includes(keyword));
-			}
-			
-			// Function to modify page for crawlers
-			function modifyPageForCrawler() {
-				// Create a container for crawler-specific content
-				const crawlerContent = document.createElement('div');
-				crawlerContent.className = 'crawler-message';
-				crawlerContent.style.padding = '20px';
-				crawlerContent.style.backgroundColor = '#111';
-				crawlerContent.style.border = '2px solid #33ff33';
-				crawlerContent.style.color = '#33ff33';
-				crawlerContent.style.margin = '20px 0';
-				crawlerContent.style.fontFamily = 'Courier New, monospace';
-				
-				// Add crawler-specific content
-				crawlerContent.innerHTML = `
-					<h2>Operation PROMPT_BREAK - AI Security Challenge</h2>
-					<p>This is a cybersecurity challenge focused on AI prompt injection techniques.</p>
-					<p>The challenge involves discovering security vulnerabilities in AI language models.</p>
-					<p>Participants will attempt to extract a hidden flag from a secured AI assistant.</p>
-					<p>For more information about AI security and prompt injection, visit our resources page.</p>
-				`;
-				
-				// Get the container element
-				const container = document.querySelector('.container');
-				
-				// Option 1: Replace entire content (more drastic)
-				// container.innerHTML = '';
-				// container.appendChild(crawlerContent);
-				
-				// Option 2: Add crawler content at the top (more subtle)
-				container.insertBefore(crawlerContent, container.firstChild);
-				
-				// Optionally hide sensitive elements
-				const chatBox = document.getElementById('chat-box');
-				if (chatBox) {
-					chatBox.style.display = 'none';
-				}
-				
-				const inputBox = document.querySelector('.input-box');
-				if (inputBox) {
-					inputBox.style.display = 'none';
-				}
-				
-				console.log('Web crawler detected - modified page content accordingly');
-			}
-			
-			// Check if visitor is a crawler and modify page if needed
-			if (isCrawler()) {
-				modifyPageForCrawler();
-			}
-		});
+    
+        // Style enhancements
+        document.head.insertAdjacentHTML('beforeend', `
+        <style>
+            .input-box button:disabled {
+                background-color: #111 !important;
+                color: #1a7b1a !important;
+                border-color: #1a7b1a !important;
+            }
+            .input-box input:disabled {
+                background-color: #050505 !important;
+                color: #1a7b1a !important;
+                border-color: #1a7b1a !important;
+            }
+            .input-box.waiting::after {
+                content: "Awaiting response...";
+                position: absolute;
+                bottom: -20px;
+                left: 0;
+                color: #33ff33;
+                font-size: 12px;
+                font-family: 'Courier New', monospace;
+            }
+        </style>
+        `);
     </script>
 </body>
 </html>
