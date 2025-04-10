@@ -352,7 +352,7 @@
     
         // Auto-call API exit on unload (better queue behavior)
         window.addEventListener("beforeunload", () => {
-            fetch('http://localhost:8000/api/exit', {
+            fetch('https://ctf.mcport.net/api/exit', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ user_id: userID }),
